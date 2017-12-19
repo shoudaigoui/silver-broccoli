@@ -1,0 +1,9 @@
+ShiftRightLogical<n>(input:[32]) = output:[32] where
+	if n = 0 then
+		output = input
+	else
+		output = ShiftRightLogical<n-1>(0 . input[1..])
+	end if
+end where
+
+main(input:[32]) = output:[32] where output = ShiftRightLogical<1>(input) end where
