@@ -1,0 +1,11 @@
+(*Pour utiliser la soustraction signé, je vais avoir besoin du Not n bites sûrement et du n-adder*)
+
+negativisation<n>(input:[n]) = output:[n] where
+	x = not<n> input;
+	un = Extension_de_signe<31>(1);
+	output = adder<n>(x,un)
+end where
+
+main<32>(input:[32]) = output:[32] where
+	output = negativisation<32>(input)
+end where
