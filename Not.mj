@@ -1,0 +1,11 @@
+Not<n>(a:[n]) = (o:[n]) where
+	if n = 0 then
+		o = []
+	else
+		o = (not (a[0])) . Not<n-1>(a[1..n-1]);
+	end if
+end where
+
+main(a:[32]) = (o:[32]) where o = Not<32>(a) end where
+
+
