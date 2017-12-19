@@ -2,7 +2,7 @@ ShiftRightLogical<n>(input:[32]) = output:[32] where
 	if n = 0 then
 		output = input
 	else
-		output = ShiftRightLogical<n-1>(0 . input[1..])
+		output = ShiftRightLogical<n-1>(0 . input[..30])
 	end if
 end where
 
