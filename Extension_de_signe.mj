@@ -2,7 +2,7 @@ Extension_de_signe<n>(input:[32-n]) = output:[32] where
 	if n = 0 then
 		output = input
 	else
-		x = 0 . input;
+		x = input[0] . input;
 		output = Extension_de_signe<n-1>(x)
 	end if
 end where
