@@ -1,0 +1,13 @@
+Substract_unsigned<n> (a:[n],b:[n],c) = (o:[n],oc) where
+	if n = 0 then
+		o = [];
+		oc = c
+	else 
+		c1 = a[0] ^ b[0] ^ c[0];
+		r1 = (a[0] & b[0] & c[0]) + ((not a[0]) & (b[0] ^ c[0])) ;
+		(r2,oc) = Substract_unsigned<n-1> (a[1..],b[1..],c1);
+		o = r2 . r1
+	end if
+end where
+
+main(a,b,c) = (o,oc) where (o,oc) = Substract_unsigned<1> (a,b,c) end where
