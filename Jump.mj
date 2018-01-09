@@ -1,11 +1,43 @@
 (*Le main est inutile mais peut-être utilise pour tester.
 On a besoin ici de extension de signe et add*)
 
-Jump(addr:[26]) = new_pc:[32] where
-	x = add<32>(pc, Extension_de_signe<28>(0100));
-	new_pc = x[28..31] . addr . 00
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
 end where
 
-main(addr:[26]) = new_pc:[32] where
-	new_pc = Jump(addr)
+adder<n>(a:[n], b:[n], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = 0
+  else
+    (s_n1, c_n1) = adder<n-1>(a[1..], b[1..], c_in);
+    (s_n, c_out) = fulladder(a[0], b[0], c_n1);
+    o = s_n . s_n1
+  end if
+end where
+
+
+Extension_de_signe<n>(input:[32-n]) = output:[32] where
+	if n = 0 then
+		output = input
+	else
+		x = input[0] . input;
+		output = Extension_de_signe<n-1>(x)
+	end if
+end where
+
+
+
+
+
+
+Jump(addr:[26],pc:[32]) = new_pc:[32] where
+	(x,o) = adder<32>(pc, Extension_de_signe<28>(0100),0);
+	x_part = x[28..31];
+	new_pc = x_part . addr . 0b00
+end where
+
+main(addr:[26],pc:[32]) = new_pc:[32] where
+	new_pc = Jump(addr,pc)
 end where

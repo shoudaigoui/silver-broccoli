@@ -1,0 +1,12 @@
+Load_word(rs:[32],imm:[16]) = rt:[32] where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	rt = ram<32,32>(addr,0,addr,addr) (*Comme on écrit pas, les deux dernières valeurs sont bidons*)
+end where
+
+main(rs:[32],imm:[16]) = rt:[32] where
+	rt = Load_byte_unsigned(rs,imm)
+end where
+
+(*On remarque de Load Linked et Load Word sont absolument identiques, à un point près qui est une histoire de verrou nécessaire pour que deux programmes ne s'executent pas en même temps sur un processeur à plusieurs coeurs.
+
+Comme ca ne nous concerne pas, nous utiliserons uniquement Load Word et oublierons Load Linked*)

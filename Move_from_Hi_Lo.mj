@@ -1,0 +1,10 @@
+Move_from_Hi_Lo(hilo:[32]) = rd:[32] where
+	rd = hilo
+end where
+
+main(hilo:[32]) = rd:[32] where
+	rd = Move_from_Hi_Lo(hilo)
+end where
+
+(*Cette instruction est un peu inutiles...
+J'ai regroupé les instructions parce que le code ne dépend pas de la valeur, la seule différence est la source de la valeur, ce que je ne gère pas*) 
