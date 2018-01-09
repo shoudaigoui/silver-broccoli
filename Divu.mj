@@ -1,0 +1,28 @@
+Gt_bit(a, b) = c where
+	c = a & (not b);	
+end where
+
+Ge<n>(a:[n], b:[n]) = c where
+	if n = 0 then 
+		c = 1;
+	else 
+		c = Gt_bit(a[0],b[0]) + ((not (a[0] ^ b[0])) & Ge<n-1>(a[1..], b[1..]);  
+  end if
+end where
+	
+Divu_aux<k>(N:[32], D:[32], Q:[32], R:[32) = (Q1:[32], R1:[32]) where
+	if k = -1 then
+		(Q1, R1) = Divu_aux<0>(N, D, Q, R);		
+  else
+		(Q0, R0) = Divu_aux<k+1>(N, D, Q, R);
+		R' = (ShiftLeft<1>(R))[..30] . N[k];
+		c = Ge<32>(R', D);	
+		diff = And<32>(Repeat<32>(c), D)
+		R1 = Substract_unsigned<32>(R', diff);
+		Q1 = Q0[..(k-1)] . c . Q0[(k+1)..];
+	end if
+end where  
+		
+Divu(N:[32], D:[32]) = (Q:[32], R:[32]) where
+	(Q, R) = Divu_aux(N, D, Repeat<32>(0), Repeat<32>(0));  		
+end where	
