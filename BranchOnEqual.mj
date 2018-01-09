@@ -1,15 +1,55 @@
-Branch_on_equal<n>(a:[n],b:[n],addr:[16],pc:[32]) = new_pc:[32] where
+
+(*Besoin de Extension de signe, add et mux*)
+
+Extension_de_signe<n>(input:[32-n]) = output:[32] where
 	if n = 0 then
-		new_pc = Add<32>(Add<32>(pc, 0000000000000000 . addr),Extension_de_signe<28>(0100))
+		output = input
 	else
-		if a[0] = b[0] then
-			Branch_on_equal<n-1>(a[1..],b[1..],addr,pc)
-		else		
-			new_pc = pc
-		end if
+		x = input[0] . input;
+		output = Extension_de_signe<n-1>(x)
 	end if
 end where
 
-main(a:[32],b:[32]) = output:[32] where
-	output = Branch_on_equal<32>(a,b)
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
+end where
+
+adder<n>(a:[n], b:[n], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = 0
+  else
+    (s_n1, c_n1) = adder<n-1>(a[1..], b[1..], c_in);
+    (s_n, c_out) = fulladder(a[0], b[0], c_n1);
+    o = s_n . s_n1
+  end if
+end where
+
+Nmux<n>(a,b:[n],c:[n]) = d:[n] where
+	if n = 1 then
+		d = mux(a,b,c)
+	else
+		d = Nmux<n-1>(a,b[1..],c[1..]) . mux(a,b[0],c[0])
+	end if
+end where
+
+Branch_on_equal<n>(rs:[n],rt:[n],addr:[16],pc:[32]) = new_pc:[32] where
+	if n = 0 then
+		quatre = Extension_de_signe<28>(0100);
+		ext_addr = 0x0000 . addr;
+		(pc_4,o1) = adder<32>(pc,quatre,0);
+		(pc_4_addr,o2) = adder<32>(pc_4,ext_addr,0);
+		new_pc = pc_4_addr
+	else
+		f1 = rs[0];
+		f2 = rt[0];
+		new_pc_possible = Branch_on_equal<n-1>(rs[1..],rt[1..],addr,pc);
+		condition = not (f1 xor f2);
+		new_pc = Nmux<32>(condition,new_pc_possible,pc) (*Ici faire attention à regarder quelle est la convention du mux*)
+	end if
+end where
+
+main(rs:[32],rt:[32],addr:[16],pc:[32]) = output:[32] where
+	output = Branch_on_equal<32>(rs,rt,addr,pc)
 end where
