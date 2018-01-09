@@ -1,9 +1,9 @@
-(*Est-ce que c'est normal que l'addresse donnée n'est que une taille 26 ?
-Le main est inutile mais peut-être utilise pour tester.
-On a besoin ici de extension de signe*)
+(*Le main est inutile mais peut-être utilise pour tester.
+On a besoin ici de extension de signe et add*)
 
 Jump(addr:[26]) = new_pc:[32] where
-	new_pc = Extension_de_signe<6>(addr)
+	x = add<32>(pc, Extension_de_signe<28>(0100));
+	new_pc = x[28..31] . addr . 00
 end where
 
 main(addr:[26]) = new_pc:[32] where
