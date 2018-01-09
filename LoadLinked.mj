@@ -1,0 +1,8 @@
+Load_linked(rs:[32],imm:[16]) = rt:[32] where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	rt = ram<32,32>(addr,0,addr,addr) (*Comme on écrit pas, les deux dernières valeurs sont bidons*)
+end where
+
+main(rs:[32],imm:[16]) = rt:[32] where
+	rt = Load_linked(rs,imm)
+end where
