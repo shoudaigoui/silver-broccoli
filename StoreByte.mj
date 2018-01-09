@@ -1,0 +1,8 @@
+Store_byte(rs:[32],imm:[16],rt:[32] = () where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	val = ram<32,32>(addr,1,addr,rt) (*Comme on ne lit pas, la première valeur est bidon*)
+end where
+
+main(rs:[32],imm:[16]) = () where
+	val = Store_byte(rs,imm,rt)
+end where

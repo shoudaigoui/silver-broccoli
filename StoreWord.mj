@@ -1,0 +1,8 @@
+Store_word(rs:[32],imm:[16],rt:[32]) = () where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	x = ram<32,32>(addr,1,addr,rt)
+end where
+
+main(rs:[32],imm:[16],rt:[32]) = () where
+	x = Store_word(rs,imm,rt)
+end where

@@ -1,0 +1,9 @@
+Store_halfword(rs:[32],imm:[16],rt:[32]) = () where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	val = ram<32,32>(addr,0,addr,addr)
+	x = ram<32,32>(addr,1,addr, val[16..31] . rt [0..15])
+end where
+
+main(rs:[32],imm:[16],rt:[32]) = () where
+	x = Store_halfword_(rs,imm,rt)
+end where
