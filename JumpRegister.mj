@@ -1,0 +1,7 @@
+Jump_register(reg_val:[32]) = new_pc:[32] where
+	new_pc = reg_val
+end where
+
+main(reg_val:[32]) = new_pc:[32] where
+	new_pc = Jump_register(reg_val)
+end where

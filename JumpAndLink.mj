@@ -1,0 +1,7 @@
+Jump_and_link(addr:[26],r31:[32],pc:[32]) = new_pc:[32],new_r31:[32] where
+	new_pc = Extension_de_signe<6>(addr);
+	new_r31 = Add<32>(pc,Extension_de_signe<28>(1000))
+end where
+
+(*Je mets pas de main
+Ici on a besoin de l'extension de signe et de add*)

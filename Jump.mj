@@ -1,0 +1,11 @@
+(*Est-ce que c'est normal que l'addresse donnée n'est que une taille 26 ?
+Le main est inutile mais peut-être utilise pour tester.
+On a besoin ici de extension de signe*)
+
+Jump(addr:[26]) = new_pc:[32] where
+	new_pc = Extension_de_signe<6>(addr)
+end where
+
+main(addr:[26]) = new_pc:[32] where
+	new_pc = Jump(addr)
+end where
