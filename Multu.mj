@@ -15,42 +15,42 @@ end where
 
 Multu_32<n>(a:[n], b:[n]) = (c:[32], d:[32]) where
   if n <= 16 then
-    c = Repeat<32>[0]
+    c = Repeat<32>[0];
     if n = 0 then
-      d = Repeat<32>[0]
+      d = Repeat<32>[0];
     else
       if n = 1 then
-        d = Repeat<31>[0] . (c[0] & d[0]) 
+        d = Repeat<31>[0] . (c[0] & d[0]); 
       else 
-        a1 = a[..(n/2-1)]
-        a2 = a[(n/2)..]
-        b1 = b[..(n/2-1)]
-        b2 = b[(n/2)..]
-        (c1, d1) = Multu_32<n/2>(a1, b1)
-        (c2, d2) = Multu_32<n/2>(a2, b1)
-        (c3, d3) = Multu_32<n/2>(a1, b2)
-        (c4, d4) = Multu_32<n/2>(a2, b2)
-        d_1 = ShiftLeft<n>(d1)
-        d_2 = ShiftLeft<n/2>(d2)
-        d_3 = ShiftLeft<n/2>(d3)
-        d = adder2<32>(adder2<32>(adder2<32>(d_1, d_2), d_3), d4)
+        a1 = a[..(n/2-1)];
+        a2 = a[(n/2)..];
+        b1 = b[..(n/2-1)];
+        b2 = b[(n/2)..];
+        (c1, d1) = Multu_32<n/2>(a1, b1);
+        (c2, d2) = Multu_32<n/2>(a2, b1);
+        (c3, d3) = Multu_32<n/2>(a1, b2);
+        (c4, d4) = Multu_32<n/2>(a2, b2);
+        d_1 = ShiftLeft<n>(d1);
+        d_2 = ShiftLeft<n/2>(d2);
+        d_3 = ShiftLeft<n/2>(d3);
+        d = adder2<32>(adder2<32>(adder2<32>(d_1, d_2), d_3), d4);
       end if
     end if
   else 
     (* Dans ce cas, n = 32 *)
-    a1 = a[..(n/2-1)]
-    a2 = a[(n/2)..]
-    b1 = b[..(n/2-1)]
-    b2 = b[(n/2)..]
-    (c1, d1) = Multu_32<n/2>(a1, b1)
-    (c2, d2) = Multu_32<n/2>(a2, b1)
-    (c3, d3) = Multu_32<n/2>(a1, b2)
-    (c4, d4) = Multu_32<n/2>(a2, b2)
-    c_2 = ShiftRightLogical<n/2>(d2)
-    d_2 = ShiftLeft<n/2>(d2)
-    c_3 = ShiftRightLogical<n/2>(d3)
-    d_3 = ShiftLeft<n/2>(d2)
-    c = adder2<32>(adder2<32>(d1, c_2), c_3)
-    d = adder2<32>(adder2<32>(d_2, d_3), d4)
+    a1 = a[..(n/2-1)];
+    a2 = a[(n/2)..];
+    b1 = b[..(n/2-1)];
+    b2 = b[(n/2)..];
+    (c1, d1) = Multu_32<n/2>(a1, b1);
+    (c2, d2) = Multu_32<n/2>(a2, b1);
+    (c3, d3) = Multu_32<n/2>(a1, b2);
+    (c4, d4) = Multu_32<n/2>(a2, b2);
+    c_2 = ShiftRightLogical<n/2>(d2);
+    d_2 = ShiftLeft<n/2>(d2);
+    c_3 = ShiftRightLogical<n/2>(d3);
+    d_3 = ShiftLeft<n/2>(d2);
+    c = adder2<32>(adder2<32>(d1, c_2), c_3);
+    d = adder2<32>(adder2<32>(d_2, d_3), d4);
   end if
 end where
