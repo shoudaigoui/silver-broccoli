@@ -8,8 +8,8 @@ type instruction =
 let l = ["add";"addi";"addiu";"addu";"and";"andi";"beq";"bne";"j";"jal";"jr";"lbu";"lhu";"ll";"lui";"lw";"nor";"or";"ori";"slt";"slti";
 		"sltiu";"sltu";"sll";"srl";"sb";"sc";"sh";"sw";"sub";"subu";"xor";"xori";"div";"divu";"mult";"multu";"mfhi";"mflo";"sra"]
 
-let cts i = Char.escaped (Char.chr i) (* juste un raccourci *)
-let cts' c = Char.escaped c (* un raccourci d'écriture *)
+let cts i = String.make 1 (Char.chr i) (* juste un raccourci *)
+let cts' c = String.make 1 c (* un raccourci d'écriture *)
 
 let read_from_file p =
 	let in_channel = open_in p in
@@ -133,4 +133,13 @@ let main path =
 	output_string o x;
 	close_out o
 	
-	
+let file =
+  let file = ref None in
+  let set_file s =
+    if not (check_suffix s ".mips") then
+      raise (Arg.Bad "No .mips extension");
+    file := Some s
+  in
+  Arg.parse [] set_file "";
+  match !file with Some f -> main f | None -> exit 1
+
