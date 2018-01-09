@@ -5,7 +5,7 @@ Branch_on_not_equal<n>(a:[n],b:[n],addr:[16],pc:[32]) = new_pc:[32] where
 		if a[0] = b[0] then
 			Branch_on_equal<n-1>(a[1..],b[1..],addr,pc)
 		else		
-			new_pc = Add<32>(Add<32>(pc,Extension_de_signe<16>(addr)),Extension_de_signe<29>(100))
+			new_pc = Add<32>(Add<32>(pc,0000000000000000 . addr),Extension_de_signe<28>(0100))
 		end if
 	end if
 end where
