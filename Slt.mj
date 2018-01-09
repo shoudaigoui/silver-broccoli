@@ -1,0 +1,36 @@
+Lt_bit(a, b) = c where
+	c = (not a) & b;
+end where
+
+Lt_unsigned<n>(a:[n], b:[n]) = c where
+	if n = 0 then 
+		c = 0;
+	else
+		c = Lt_bit(a[0], b[0]) + ((not (a[0] ^ b[0])) & Lt_unsigned<n-1>(a[1..],
+b[1..]));
+	end if
+end where
+
+ift(a, b, c) = d where
+	d = (a & b) + ((not a) & c)
+end where
+
+Lt<n,k>(a:[n], b:[n]) = c where
+	if n = 0 then
+		c = 0;
+	else
+		if k = 0 then
+			c = ift(Lt_bit(b[0], a[0]), 1, ift(Lt_bit(a[0], b[0]), 0, Lt<n,1>(a, b)));
+		else
+			if k = n - 1 then
+				c = ift(Lt_bit(a[n-1], b[n-1]), 1, 0);
+			else 
+				c = ift(Lt_bit(a[k], b[k]), 1, ift(Lt_bit(b[k], a[k]), 0, Lt<n, k+1>(a, b)));
+			end if
+		end if
+	end if
+end where
+
+Lt_signed<n>(a:[n], b:[n]) = c where
+	c = Lt<n,0>(a, b);
+end where
