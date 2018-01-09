@@ -1,0 +1,7 @@
+Load_upper_immediate(imm:[16]) = rt:[32] where
+	rt = imm. 0000000000000000
+end where
+
+main(imm:[16]) = rt:[32] where
+	rt = Load_byte_unsigned(rs,imm)
+end where

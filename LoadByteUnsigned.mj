@@ -1,0 +1,9 @@
+Load_byte_unsigned(rs:[32],imm:[16]) = rt:[32] where
+	addr = add<32>(rs,Extension_de_signe<16>(imm))
+	val = ram<32,32>(addr,0,addr,addr) (*Comme on écrit pas, les deux dernières valeurs sont bidons*)
+	rt = Extension_de_signe<24>(val[0..7])
+end where
+
+main(rs:[32],imm:[16]) = rt:[32] where
+	rt = Load_byte_unsigned(rs,imm)
+end where
