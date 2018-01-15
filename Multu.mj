@@ -6,7 +6,7 @@ Repeat<n>(a) = (b:[n]) where
   end if
 end where
 
-adder2<n>(a:[n], b[n]) = (o:[n]) where
+adder2<n>(a:[n], b:[n]) = (o:[n]) where
   (o, c) = adder<n>(a, b, 0)
 end where
 
@@ -15,12 +15,12 @@ end where
 
 Multu_32<n>(a:[n], b:[n]) = (c:[32], d:[32]) where
   if n <= 16 then
-    c = Repeat<32>[0];
+    c = Repeat<32>(0);
     if n = 0 then
-      d = Repeat<32>[0];
+      d = Repeat<32>(0);
     else
       if n = 1 then
-        d = Repeat<31>[0] . (c[0] & d[0]); 
+        d = Repeat<31>(0) . (c[0] & d[0]); 
       else 
         a1 = a[..(n/2-1)];
         a2 = a[(n/2)..];

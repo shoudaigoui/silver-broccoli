@@ -1,6 +1,34 @@
+(*On a besoin de add, de l'extension de signe*)
+
+Extension_de_signe<n>(input:[32-n]) = output:[32] where
+	if n = 0 then
+		output = input
+	else
+		x = input[0] . input;
+		output = Extension_de_signe<n-1>(x)
+	end if
+end where
+
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
+end where
+
+adder<n>(a:[n], b:[n], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = 0
+  else
+    (s_n1, c_n1) = adder<n-1>(a[1..], b[1..], c_in);
+    (s_n, c_out) = fulladder(a[0], b[0], c_n1);
+    o = s_n . s_n1
+  end if
+end where
+
+
 Load_halfword_unsigned(rs:[32],imm:[16]) = rt:[32] where
-	addr = add<32>(rs,Extension_de_signe<16>(imm))
-	val = ram<32,32>(addr,0,addr,addr) (*Comme on écrit pas, les deux dernières valeurs sont bidons*)
+	(addr,c_out) = adder<32>(rs,Extension_de_signe<16>(imm),0);
+	val = ram<32,32>(addr,0,addr,addr); (*Comme on écrit pas, les deux dernières valeurs sont bidons*)
 	rt = Extension_de_signe<16>(val[0..15])
 end where
 

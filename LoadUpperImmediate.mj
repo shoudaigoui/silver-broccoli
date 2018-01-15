@@ -3,5 +3,5 @@ Load_upper_immediate(imm:[16]) = rt:[32] where
 end where
 
 main(imm:[16]) = rt:[32] where
-	rt = Load_byte_unsigned(rs,imm)
+	rt = Load_upper_immediate(imm)
 end where
