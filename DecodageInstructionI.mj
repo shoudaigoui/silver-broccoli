@@ -1,0 +1,101 @@
+Rajoute_0_devant<n>(input:[32-n]) = output:[32] where
+    if n = 0 then
+        output = input
+    else 
+        output = Rajoute_0_devant<n-1>(0 . input)
+    end if
+end where
+
+
+(*Attention à la convention choisie pour le mux*)
+Nmux<n>(a,b:[n],c:[n]) = d:[n] where
+	if n = 1 then
+		d = mux(a,b,c)
+	else
+		d = Nmux<n-1>(a,b[1..],c[1..]) . mux(a,b[0],c[0])
+	end if
+end where
+
+
+interprete_opcode(opcode:[6],rs_val:[32],rt_val:[32],imm_32:[32]) = output:[32] where
+    o0 = opcode[0];
+    o1 = opcode[1];
+    o2 = opcode[2];
+    o3 = opcode[3];
+    o4 = opcode[4];
+    o5 = opcode[5];
+    
+    (*Mettre les fonctions voulues ici, on le fera quand on assemblera le tout en un seul fichier*)
+    b000000 = 0x00000000 (*instructions R pas besoin de ça*) ;
+    (*pas de 1*)
+    b000010 = 0x00000000 (*jump*) ;
+    b000011 = 0x00000000 (*jump and link*) ;
+    b000100 = 0x00000000 (*branch on equal*) ;
+    b000101 = 0x00000000 (*branch on not equal*) ;
+    (*pas de 6 ni de 7*)
+    b001000 = 0x00000000 (*Addi*) ;
+    b001001 = 0x00000000 (*Addiu*) ;
+    b001010 = 0x00000000 (*Set less than imm*) ;
+    b001011 = 0x00000000 (*Set less than imm u*) ;
+    b001100 = 0x00000000 (*And imm*) ;
+    b001101 = 0x00000000 (*Or imm*) ;
+    (*pas de e*)
+    b001111 = 0x00000000 (*Load upper imm*) ;
+    
+    b100011 = 0x00000000 (*Load word*) ;
+    b100100 = 0x00000000 (*Load Byte u*) ;
+    b100101 = 0x00000000 (*Load Halfword u*) ;
+    b101000 = 0x00000000 (*Store byte*) ;
+    b101001 = 0x00000000 (*Store halfword*) ;
+    b101011 = 0x00000000 (*Store word*) ;
+    (*Je n'ai pas mis Load linked et Store conditional qui sont dans notre MIPS inutiles ou abérant*)
+    
+    b00010q6 = Nmux<32>(o5,b000101,b000100) ;
+    b00100q6 = Nmux<32>(o5,b001001,b001000) ;
+    b00101q6 = Nmux<32>(o5,b001011,b001010) ;
+    b00110q6 = Nmux<32>(o5,b001101,b001100) ;
+    b10010q6 = Nmux<32>(o5,b100101,b100100) ;
+    b10100q6 = Nmux<32>(o5,b101001,b101000) ;
+    
+    b0010q5 = Nmux<32>(o4,b00101q6,b00100q6) ;
+    b0011q5 = Nmux<32>(o4,b001111,b00110q6) ;
+    b1010q5 = Nmux<32>(o4,b101011,b10100q6) ;
+    
+    b001q4 = Nmux<32>(o3,b0011q5,b0010q5) ;
+    b100q4 = Nmux<32>(o3,b10010q6,b100011) ;
+    
+    b00q3 = Nmux<32>(o2,b001q4,b00010q6) ; 
+    b10q3 = Nmux<32>(o2,b1010q5,b100q4) ;
+    
+    output = Nmux<32>(o0,b10q3,b00q3) ;
+end where
+
+est_branch(opcode:[6]) = o where
+    o = (not opcode[0]) & (not opcode[1]) & (not opcode[2]) & opcode[3] & (not opcode[4])
+end where
+
+Decodage_instruction_I(input:[32]) = (rt_32:[32],output:[32],we_registre) where (*write enable*)
+    (*On récupère les différentes parties de l'instruction*)
+	imm = input[0..15] ;
+    rs = input[21..25] ;
+    rt = input[16..20] ;
+    opcode = input[26..31] ;
+    (*On met les addresses des registres/imm sur 32 bits*)
+    rs_32 = Rajoute_0_devant<27>(rs) ;
+    rt_32 = Rajoute_0_devant<27>(rt) ;
+    imm_32 = Rajoute_0_devant<16>(imm) ;
+    (*On récupère les valeurs des registres qui nous interesse*)
+    rs_val = ram<32,32>(rs_32,0,rs_32,rs_32) ;
+    rt_val = ram<32,32>(rt_32,0,rt_32,rt_32) ;
+    (*On interprète les funct*)
+    output = interprete_opcode(opcode,rs_val,rt_val,imm_32) ;
+    condition = est_branch(opcode);
+    rt_32 = Nmux<32>(condition,Rajoute_0_devant<27>(0b11100),rt_32) (*pc*);
+    cond_28_29 = opcode[0] & (not opcode[1]) & opcode[2] & (not opcode[3]) & (not opcode[4]) ;
+    cond_2b = opcode[0] & (not opcode[1]) & opcode[2] & (not opcode[3]) & opcode[4] & opcode[5] ;
+    we_registre = cond_28_29 + cond_2b
+end where
+
+main(input:[32]) = (rt:[32],output:[32],we_registre) where
+	(rt,output,we_registre) = Decodage_instruction_I(input)
+end where

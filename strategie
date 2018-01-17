@@ -72,6 +72,6 @@ On envoie sur la bonne fonction (faire gaffe de lire les registres avant de les 
 
 
 Instructions de type I et J :
-plusieurs erreurs ->    I et J n'ont pas la même structure ce qui demande donc un petit travail supplémentaire (à faire en lien avec les fonctions)
-                        Le retour n'est pas forcément à mettre dans un registre, on peut aussi devoir juste écrire en mémoire ou devoir mettre le résultat dans un autre registre : ex PC ou r31.
+plusieurs erreurs ->    I et J n'ont pas la même structure ce qui demande donc un petit travail supplémentaire (à faire en lien avec les fonctions) : séparer en deux fonctions I et J, simples.
+                        Le retour n'est pas forcément à mettre dans un registre, on peut aussi devoir juste écrire en mémoire ou devoir mettre le résultat dans un autre registre : ex PC ou r31. Mettre dans un autre registre : traiter à part les Branch. Mettre en mémoire : on ajoute un indicateur et on renvoie 0 par exemple.
                         Plusieurs solutions : essayer d'en tenir compte ici (c'est possible), essayer de changer le retour des fonctions pour renvoyer le registre ou dire de ne pas écrire dans les registres.

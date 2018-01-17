@@ -1,0 +1,35 @@
+Rajoute_0_devant<n>(input:[32-n]) = output:[32] where
+    if n = 0 then
+        output = input
+    else 
+        output = Rajoute_0_devant<n-1>(0 . input)
+    end if
+end where
+
+
+(*Attention à la convention choisie pour le mux*)
+Nmux<n>(a,b:[n],c:[n]) = d:[n] where
+	if n = 1 then
+		d = mux(a,b,c)
+	else
+		d = Nmux<n-1>(a,b[1..],c[1..]) . mux(a,b[0],c[0])
+	end if
+end where
+
+
+Decodage_instruction_J(input:[32]) = (new_pc:[32],new_r31:[32]) where
+    pc = Rajoute_0_devant<27>(0b11100);
+    pc_val = ram<32,32>(pc,0,pc,pc);
+    r31 = Rajoute_0_devant<27>(0b11111);
+    r31_val = ram<32,32>(r31,0,r31,r31);
+    opcode = input[26..31] ;
+    o_jump = 0x00000000 (*jump*) ;
+    o_jump_and_link = 0x00000000 (*jump and link*) ;
+    cond = opcode[5];
+    new_pc = Nmux<32>(cond,o_jump_and_link,o_jump) ;
+    new_r31 = Nmux<32>(cond,pc_val,r31_val)
+end where
+
+main(input:[32]) = (new_pc:[32],new_r31:[32]) where
+    (new_pc,new_r31) = Decodage_instruction_J(input)
+end where
