@@ -1,0 +1,85 @@
+Rajoute_0_devant<n>(input:[32-n]) = output:[32] where
+    if n = 0 then
+        output = input
+    else 
+        output = Rajoute_0_devant<n-1>(0 . input)
+    end if
+end where
+
+
+(*Attention à la convention choisie pour le mux*)
+Nmux<n>(a,b:[n],c:[n]) = d:[n] where
+	if n = 1 then
+		d = mux(a,b,c)
+	else
+		d = Nmux<n-1>(a,b[1..],c[1..]) . mux(a,b[0],c[0])
+	end if
+end where
+
+
+
+interprete_funct(funct:[6],rs:[32],rt:[32]) = output:[32] where
+    f0 = funct[0];
+    f1 = funct[1];
+    f2 = funct[2];
+    f3 = funct[3];
+    f4 = funct[4];
+    f5 = funct[5];
+    
+    (*Mettre les fonctions voulues ici, on le fera quand on assemblera le tout en un seul fichier*)
+    b000000 = 0x00000000 (*shift left logical*) ;
+    b000010 = 0x00000000 (*shift right logical*) ;
+    b001000 = 0x00000000 (*jump register*) ;
+    b011010 = 0x00000000 (*div*) ;
+    b011011 = 0x00000000 (*divu*) ;
+    b100000 = 0x00000000 (*add*) ;
+    b100001 = 0x00000000 (*addu*) ;
+    b100010 = 0x00000000 (*sub*) ;
+    b100011 = 0x00000000 (*subu*) ;
+    b100100 = 0x00000000 (*and*) ;
+    b100101 = 0x00000000 (*or*) ;
+    b100111 = 0x00000000 (*nor*) ;
+    b101010 = 0x00000000 (*set less than*) ;
+    b101011 = 0x00000000 (*set less than unsigned*) ;
+    (*Je n'ai pas mis Move from hi/lo, Mult et Multu parce qu'ils nous sont inutiles, on verra plus tard si on les rajoute*)
+    
+    b10000q6 = Nmux<32>(f5,b100001,b100000) ;
+    b10001q6 = Nmux<32>(f5,b100011,b100010) ;
+    b10010q6 = Nmux<32>(f5,b100101,b100100) ;
+    
+    b1000q5 = Nmux<32>(f4,b10001q6,b10000q6) ;
+    b1001q5 = Nmux<32>(f4,b100111,b10010q6) ;
+    
+    b000q4 = Nmux<32>(f4,b000010,b000000) ;
+    b100q4 = Nmux<32>(f3,b1001q5,b1000q5) ;
+    b101q4 = Nmux<32>(f5,b101011,b101010) ;
+    
+    b00q3 = Nmux<32>(f2,b001000,b000q4) ; 
+    b01q3 = Nmux<32>(f5,b011011,b011010) ; (*si ca commence par 01 alors c'est 011010 ou 011011*)
+    b10q3 = Nmux<32>(f2,b101q4,b100q4) ;
+    
+    b0q2 = Nmux<32>(f1,b01q3,b00q3) ;
+    
+    output = Nmux<32>(f0,b10q3,b0q2) ;
+end where
+    
+Decodage_instruction_R(input:[26]) = (rd_32:[32],output:[32]) where
+    (*On récupère les différentes parties de l'instruction*)
+	funct = input[0..5] ;
+    rs = input[21..25] ;
+    rt = input[16..20] ;
+    rd = input[11..15] ;
+    (*On met les addresses des registres sur 32 bits*)
+    rs_32 = Rajoute_0_devant<27>(rs) ;
+    rt_32 = Rajoute_0_devant<27>(rt) ;
+    rd_32 = Rajoute_0_devant<27>(rd) ;
+    (*On récupère les valeurs des registres qui nous interesse*)
+    rs_val = ram<32,32>(rs_32,0,rs_32,rs_32) ;
+    rt_val = ram<32,32>(rt_32,0,rt_32,rt_32) ;
+    (*On interprète les funct*)
+    output = interprete_funct(funct,rs_val,rt_val) ;
+end where
+
+main(input:[26]) = (rd:[32],output:[32]) where
+	(rd,output) = Decodage_instruction_R(input)
+end where

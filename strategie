@@ -46,3 +46,26 @@ $sp -> 29
 $fp -> 30
 $s3 -> 31
 
+
+Comment savoir quelle instruction utiliser ?
+Opcode :
+0 pour une instruction R
+un numéro propre pour une instruction I ou J
+
+Funct pour les instructions R :
+Donne donne un numéro propre à chaque instruction.
+
+
+
+En Minijazz :
+On récupère un argument, on regarde le opcode.
+Si il vaut 0 :
+On sait que c'est une instruction R, on passe sur la fonction instruction de type R (en enlevant le opcode)
+Sinon :
+On passe sur la fonction instruction de type J ou I.
+
+Instructions de type R 
+(prend en entrée 26 bits : l'instruction sans l'opcode ; 
+renvoie le résultat de l'instruction : ce n'est pas lui qui met dans le registre, on le fera dans la fonction globale) :  
+On regarde le Funct (comment le faire un peu efficacement ? Des Mux les un à la suite des autres ?)
+On envoie sur la bonne fonction (faire gaffe de lire les registres avant de les donner en argument)
