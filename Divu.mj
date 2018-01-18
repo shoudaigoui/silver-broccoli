@@ -1,3 +1,33 @@
+And<n>(a:[n],b:[n]) = c:[n] where
+	if n = 0 then
+		c = []
+	else		
+		c0 = a[0] & b[0];
+		c1 = And<n-1>(a[1..],b[1..]);
+		c = c0 . c1
+	end if
+end where
+
+ShiftLeft<n>(input:[32]) = output:[32] where
+	if n = 0 then 
+		output = input
+	else
+		output = ShiftLeft<n-1>(input[1..31] . 0)
+	end if
+end where
+
+Substract_unsigned<n> (a:[n],b:[n],c) = (o:[n],oc) where
+	if n = 0 then
+		o = [];
+		oc = c
+	else 
+		c1 = a[0] ^ b[0] ^ c[0];
+		r1 = (a[0] & b[0] & c[0]) + ((not a[0]) & (b[0] ^ c[0])) ;
+		(r2,oc) = Substract_unsigned<n-1> (a[1..],b[1..],c1);
+		o = r2 . r1
+	end if
+end where
+
 Gt_bit(a, b) = c where
 	c = a & (not b);	
 end where
@@ -6,23 +36,33 @@ Ge<n>(a:[n], b:[n]) = c where
 	if n = 0 then 
 		c = 1;
 	else 
-		c = Gt_bit(a[0],b[0]) + ((not (a[0] ^ b[0])) & Ge<n-1>(a[1..], b[1..]);  
+		c = Gt_bit(a[0],b[0]) + ((not (a[0] ^ b[0])) & Ge<n-1>(a[1..], b[1..]));  
   end if
 end where
-	
-Divu_aux<k>(N:[32], D:[32], Q:[32], R:[32) = (Q1:[32], R1:[32]) where
-	if k = -1 then
-		(Q1, R1) = Divu_aux<0>(N, D, Q, R);		
+
+Repeat<n>(a) = (c:[n]) where
+	if n = 0 then
+    c = [];
+  else 
+    tail = Repeat<n-1>(a);
+    c = a . tail;
+  end if
+end where 
+
+Divu_aux<k>(N:[32], D:[32], Q:[32], R:[32]) = (Q1:[32], R1:[32]) where
+	if k = 32 then
+		Q1 = Q; 
+    R1 = R;		
   else
 		(Q0, R0) = Divu_aux<k+1>(N, D, Q, R);
-		R' = (ShiftLeft<1>(R))[..30] . N[k];
+		R' = (ShiftLeft<1>(R0))[..30] . N[k];
 		c = Ge<32>(R', D);	
-		diff = And<32>(Repeat<32>(c), D)
-		R1 = Substract_unsigned<32>(R', diff);
+		diff = And<32>(Repeat<32>(c), D);
+		(R1, L1) = Substract_unsigned<32>(R', diff, 0);
 		Q1 = Q0[..(k-1)] . c . Q0[(k+1)..];
 	end if
 end where  
 		
-Divu(N:[32], D:[32]) = (Q:[32], R:[32]) where
-	(Q, R) = Divu_aux(N, D, Repeat<32>(0), Repeat<32>(0));  		
+main(N:[32], D:[32]) = (Q:[32], R:[32]) where
+	(Q, R) = Divu_aux<0>(N, D, Repeat<32>(0), Repeat<32>(0));  		
 end where	
