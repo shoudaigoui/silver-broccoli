@@ -30,8 +30,6 @@ ShiftRightLogical<n>(input:[32]) = output:[32] where
 	end if
 end where
 
-
-
 Repeat<n>(a) = (b:[n]) where
   if n = 0 then
     b = []
@@ -44,53 +42,37 @@ adder2<n>(a:[n], b:[n]) = (o:[n]) where
   (o, c) = adder<n>(a, b, 0)
 end where
 
+Mult_scalaire<k>(a:[16], b) = (c:[32]) where
+	c = ShiftLeft<k>(Repeat<16>(0) . (adder2<16>(Repeat<16>(b), a)))
+end where 
 
-Multu_32<n>(a:[n], b:[n]) = (c:[32], d:[32]) where
-    if n = 0 then
-        c = Repeat<32>(0);
-        d = Repeat<32>(0);
-    else 
-        if n = 1 then
-            c = Repeat<32>(0);
-            d = Repeat<31>(0) . (c[0] & d[0]); 
-        else
-            if n <= 16 then
-                c = Repeat<32>(0);
-                a1 = a[..(n/2-1)];
-                a2 = a[(n/2)..];
-                b1 = b[..(n/2-1)];
-                b2 = b[(n/2)..];
-                (c1, d1) = Multu_32<n/2>(a1, b1);
-                (c2, d2) = Multu_32<n/2>(a2, b1);
-                (c3, d3) = Multu_32<n/2>(a1, b2);
-                (c4, d4) = Multu_32<n/2>(a2, b2);
-                d_1 = ShiftLeft<n>(d1);
-                d_2 = ShiftLeft<n/2>(d2);
-                d_3 = ShiftLeft<n/2>(d3);
-                d = adder2<32>(adder2<32>(adder2<32>(d_1, d_2), d_3), d4);
-            else 
-                (* Dans ce cas, n = 32 *)
-                a1 = a[..(n/2-1)];
-                a2 = a[(n/2)..];
-                b1 = b[..(n/2-1)];
-                b2 = b[(n/2)..];
-                (c1, d1) = Multu_32<n/2>(a1, b1);
-                (c2, d2) = Multu_32<n/2>(a2, b1);
-                (c3, d3) = Multu_32<n/2>(a1, b2);
-                (c4, d4) = Multu_32<n/2>(a2, b2);
-                c_2 = ShiftRightLogical<n/2>(d2);
-                d_2 = ShiftLeft<n/2>(d2);
-                c_3 = ShiftRightLogical<n/2>(d3);
-                d_3 = ShiftLeft<n/2>(d2);
-                c = adder2<32>(adder2<32>(d1, c_2), c_3);
-                d = adder2<32>(adder2<32>(d_2, d_3), d4);
-            end if
-        end if
-    end if
+Mult<k>(a:[16], b:[16], c:[32]) = (d:[32]) where
+	if k = 16 then 
+		d = c
+  else 
+    c0 = adder2<32>(c, Mult_scalaire<k>(a, b[(15-k)]));
+    d = Mult<k+1>(a, b, c0); 
+  end if
 end where
 
-
-main(a:[32],b:[32]) = (c:[32],d:[32]) where
-    (c,d) = Multu_32<32>(a,b)
+Multu_16(a:[16], b:[16]) = c:[32] where
+  k = Repeat<32>(0);
+  c = Mult<0>(a, b, k);
+end where 
+	
+main(a:[32], b:[32]) = (c:[32], d:[32]) where
+  a1 = a[..15];
+  a2 = a[16..];
+  b1 = b[..15];
+  b2 = b[16..];
+  c1 = Multu_16(a1, b1);
+  c2 = Multu_16(a2, b1);
+  c3 = Multu_16(a1, b2);
+  c4 = Multu_16(a2, b2);
+  c_2 = ShiftRightLogical<16>(c2);
+  d_2 = ShiftLeft<16>(c2);
+  c_3 = ShiftRightLogical<16>(c3);
+	d_3 = ShiftLeft<16>(c3);
+  c = adder2<32>(adder2<32>(c1, c_2), c_3);
+  d = adder2<32>(adder2<32>(c4, d_2), d_3);
 end where
-
