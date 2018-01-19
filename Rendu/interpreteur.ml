@@ -173,11 +173,11 @@ let expr_equation ctx tram trom eq vars=
   in let t = Env.find id vars in
      if est_reg
      then (if (not (Env.mem id ctx))
-           then (let new_ctx = Env.add id (initialise_reg id_reg vars) ctx in (new_ctx,(id,id_reg),est_ram,trio_ram))
-            else (ctx,(id,id_reg),est_ram,trio_ram))
+           then (let valeur = (initialise_reg id_reg vars) in let new_ctx = Env.add id valeur ctx in (new_ctx,(id,valeur),est_ram,trio_ram))
+            else (ctx,(id,Env.find id_reg ctx),est_ram,trio_ram))
      else
        (if meme_type x t
-       then (let new_ctx = Env.add id x ctx in new_ctx,("",""),est_ram,trio_ram)
+       then (let new_ctx = Env.add id x ctx in new_ctx,("",VBit false),est_ram,trio_ram)
        else (failwith (String.concat " " [id;": Mauvais type pour la variable"])))
                                     
 
@@ -231,7 +231,7 @@ let expr_program ctx p trom tram = (*gère l'évaluation complète du programme*
   in
   let rec change_registre l ctx = match l with (*modification des registres*)
     | [] -> ctx
-    | (id,id2)::q -> let new_ctx = Env.add id (Env.find id2 ctx) ctx in change_registre q new_ctx
+    | (id,valeur)::q -> let new_ctx = Env.add id valeur ctx in change_registre q new_ctx
   in
   let rec change_ram l ctx tram = match l with (*modification de la RAM*)
     | [] -> tram
@@ -244,9 +244,10 @@ let expr_program ctx p trom tram = (*gère l'évaluation complète du programme*
        change_ram q ctx tram
     | _::q -> change_ram q ctx tram
   in let ctx = ajoute_entrees p.p_inputs ctx
-  in let ctx,liste_registre,liste_ram = evalue_equations p.p_eqs ctx [] []
+  in let ctx,liste_registre,liste_ram = evalue_equations p.p_eqs ctx [] []	  
+  in let ctx = change_registre (List.rev liste_registre) ctx
   in print_string "\n"; retourne_sorties p.p_outputs ctx; print_string "\n";
-  let ctx = change_registre (List.rev liste_registre) ctx
-  in let tram = change_ram (List.rev liste_ram) ctx tram in ctx,tram
+  let tram = change_ram (List.rev liste_ram) ctx tram in ctx,tram   
+	  
 
 
