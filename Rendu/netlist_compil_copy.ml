@@ -90,7 +90,7 @@ let rom_input () = (*Si le programme nécessite une ROM/RAM, alors ram_rom_input
       try
 	(for i = 0 to addr_size -1
 	do
-          Hashtbl.add t i (trad_value( input_line( channel) ))
+          Hashtbl.add t i (trad_value(input_line(channel)))
 	done;
 	t)
       with End_of_file -> (
