@@ -1,0 +1,148 @@
+Repeat<n>(a) = (b:[n]) where
+  if n = 0 then
+    b = []
+  else
+    b = a . Repeat<n-1>(a)
+  end if
+end where
+
+Extension_de_signe<n>(input:[32-n]) = (output:[32]) where
+	if n = 0 then
+		output = input
+	else
+		x = input[0] . input;
+		output = Extension_de_signe<n-1>(x)
+	end if
+end where
+
+(* Attention à la convention choisie pour le mux *)
+Nmux<n>(a, b:[n], c:[n]) = (d:[n]) where
+	if n = 1 then
+		d = mux(a,b,c)
+	else
+		d = Nmux<n-1>(a, b[1..], c[1..]) . mux(a, b[0], c[0])
+	end if
+end where
+
+(* ALU *)
+
+fulladder(a, b, c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
+end where
+
+adder<n>(a:[n], b:[n], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = 0
+  else
+    (s_n1, c_n1) = adder<n-1>(a[1..], b[1..], c_in);
+    (s_n, c_out) = fulladder(a[0], b[0], c_n1);
+    o = s_n . s_n1
+  end if
+end where
+
+And<n>(a:[n],b:[n]) = (c:[n]) where
+	if n = 0 then
+		c = []
+	else		
+		c0 = a[0] & b[0];
+		c1 = And<n-1>(a[1..],b[1..]);
+		c = c0 . c1
+	end if
+end where
+
+Or<n>(a:[n], b:[n]) = (c:[n]) where
+  if n = 0 then
+    c = []
+  else
+    c1 = Or<n-1>(a[1..], b[1..]);
+    c0 = a[0] + b[0];
+    c = c0 . c1
+  end if
+end where
+
+Not<n>(a:[n]) = (o:[n]) where
+	if n = 0 then
+		o = []
+	else
+		o = (not (a[0])) . Not<n-1>(a[1..n-1])
+	end if
+end where
+
+Opp<n>(a:[n]) = (o:[n]) where
+  if n = 0 then
+    o = []
+  else
+    o1 = Not(a);
+    o2 = Repeat<n-1>(0) . 1;
+    (o, l) = adder(o1, o2, 0)
+  end if
+end where
+
+Eq_bit(a, b) = (o) where
+  o = not (a ^ b)
+end where
+
+Eq<n>(a:[n], b:[n]) = (o) where
+  if n = 1 then
+    o = Eq_bit(a[0], b[0])
+  else
+    o1 = Eq_bit(a[0], b[0]);
+    o2 = Eq<n-1>(a[1..], b[1..]);
+    o = o1 & o2
+  end if
+end where
+
+Alu(a: [32], b:[32], op:[3]) = (o:[32], r, c) where
+  (o_add, c_add) = adder(a, b, 0);
+  opp_b = Opp(b);
+  (o_sub, c_sub) = adder(a, opp_b, 0);
+  o_or = Or(a,b);
+  o_and = And(a,b);
+  fl_eq = Eq(a,b);
+  fl_ge = not a[0];
+
+  o_add_sub = Nmux<32>(op[1], o_sub, o_add);
+  o_and_or = Nmux<32>(op[1], o_or, o_and);
+  o = Nmux<32>(op[0], o_and_or, o_add_sub)
+  r = mux(op[1], fl_ge, fl_eq);
+  c = mux(op[1], c_sub, c_add);
+end where
+
+Jump_and_link(addr:[26],r31:[32],pc:[32]) = (new_pc:[32],new_r31:[32]) where
+	quatre = Extension_de_signe<28>(0100);
+	(x,o1) = adder<32>(pc, quatre,0);
+	new_pc = x[28..31] . addr . 00;
+	(y,o2) = adder<32>(x, quatre,o1);
+	(new_r31,o3) = adder<32>(pc, Extension_de_signe<28>(1000),0)
+end where
+
+(* à vérifier *)
+Controls(opcode:[6]) = 
+  (RegDst, Branch, Jump, MemWrite, MemToReg, AluSrc, RegWrite, JumpAL, ALUop:[2]) where
+  RegDst = not (opcode[0] + opcode[1] + opcode[2] + opcode[3] + opcode[4] +
+  opcode[5]);
+  Branch = opcode[3] + ((opcode[5] & (not opcode[4])))
+  
+Cut(ins:[32]) = 
+  (opcode:[6], reg1:[5], reg2:[5], reg3:[5], funcode:[6], imm:[16], jump_addr:[26]) where
+  opcode = ins[..5];
+  reg1 = ins[6..10];
+  reg2 = ins[11..15];
+  reg3 = ins[16..20];
+  imm = ins[16..];
+  funcode = ins[26..];
+  jump_addr = ins[6..];
+
+(* à continuer ici *)
+
+main() = () where
+
+  (* new_pc *)
+  zero = Repeat<32>(0);
+  pc_addr = Repeat<25>(0).1.1.0.0.1.0.0;
+  pc = ram<32,32>(pc_addr, 0, zero, zero);
+  quatre = Repeat<29>.1.0.0;
+  (pc_suivant, k1) = adder<32>(pc, quatre, 0);
+
