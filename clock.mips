@@ -1,0 +1,90 @@
+(* 
+  Ces commentaires sont là juste pour la compréhension du code, ils seront
+  supprimés d'ici et mis dans le rapport.
+
+  Les registres:
+  4 -> sec ($a0) 
+  5 -> min ($a1) 
+  6 -> hr ($a2) 
+  7 -> jour ($a3) (* jour du mois *)
+  8 -> sem ($t0) (* jour de la semaine *)
+  9 -> mois ($t1)
+  10 -> annee ($t2)
+  11 -> constante 4 ($t3) : pour traiter le cas de Février
+  12 -> constante 100 ($t4)
+  13 -> constante 400 ($t5)
+  14 -> constante 60 ($t6)
+  15 -> constante 24 ($t7)
+  16 -> constante 7 ($s0)
+  17 -> constante 12 ($s1)
+  18 -> compteur4 ($s2)
+  19 -> compteur100 ($s3)
+  20 -> compteur400 ($s4)
+  21 -> siecle ($s5)
+  22 -> horloge ($s6) 
+  23 -> nbjour ($s7) 
+  24 -> registre temporaire ($t8) (* utilisé pour calculer 4 * mois *)
+
+  La mémoire:
+  memzero   '0000000010000000' (* on y stocke toujours 0 *)
+  memsec    '0000000010000100'
+  memmin    '0000000010001000'
+  memhr     '0000000010001100'
+  memjour   '0000000010010000'
+  memsem    '0000000010010100'
+  memmois   '0000000010011000'
+  memannee  '0000000010011100'
+  memnbjour '0000000010100000' (* On stocke le nombre des jours du k-ième mois à
+  l'adresse memnbjour + 4 * mois *)
+
+*)
+
+(* Initialisation *)
+lw $zero $a0 memsec (* l'emplacement dans la mémoire à déterminer *)
+lw $zero $a1 memmin
+lw $zero $a2 memhr
+lw $zero $a3 memjour
+lw $zero $t0 memsem
+lw $zero $t1 memmois
+lw $zero $t2 memannee
+lw $zero $s2 memannee_mod4
+lw $zero $s3 memannee_mod100
+lw $zero $s4 memannee_mod400
+lw $zero $s5 memsiecle
+addi $t3 $zero 4
+addi $t4 $zero 100
+addi $t5 $zero 400
+addi $t6 $zero 60
+addi $t7 $zero 24
+addi $s0 $zero 7
+addi $s1 $zero 12
+beq $s6 $zero 2 (* la 18ème instruction *)
+j 18 
+addi $a0 $a0 1 (* seconde *)
+beq $a0 $t6 2
+j 18
+addi $a1 $a1 1 (* minute *)
+lw $zero $a0 memzero
+beq $a1 $t6 2
+j 18
+addi $a2 $a2 1 (* heure *)
+lw $zero $a1 memzero
+beq $a2 $t7 2
+j 18
+addi $a3 $a3 1 (* jour *)
+addi $t0 $t0 1 (* sem *)
+lw $zero $a2 memzero
+beq $t0 $s0 2 
+j 37
+lw $zero $t0 memzero
+lw $t8 $t1 $t1
+lw $t8 $t8 $t8
+beq $s2 $zero 2
+j 46 (* le cas où annee mod 4 != 0 *)
+beq $s3 $zero 2
+j ?? (* le cas où annee mod 4 == 0 mais annee mod 100 != 0 *)
+beq $s4 $zero 2
+j 46 (* le cas où annee mod 100 == 0 mais annee mod 400 != 0 *)
+j ?? (* le cas où annee mod 400 == 0 *)
+
+(* à continuer ici *)
