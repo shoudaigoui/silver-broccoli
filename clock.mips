@@ -24,6 +24,7 @@
   22 -> horloge ($s6) 
   23 -> nbjour ($s7) 
   24 -> registre temporaire ($t8) (* utilisé pour calculer 4 * mois *)
+ 
 
   La mémoire:
   memzero   '0000000010000000' (* on y stocke toujours 0 *)
@@ -34,10 +35,10 @@
   memsem    '0000000010010100'
   memmois   '0000000010011000'
   memannee  '0000000010011100'
-  memnbjour '0000000010100000' (* On stocke le nombre des jours du k-ième mois à
-  l'adresse memnbjour + 4 * mois *)
-
-*)
+  memnbjour '0000000010100000' (* On stocke le nombre des jours du k-ième mois
+  d'une année non bissextile à
+  l'adresse memnbjour + 4 * k, et celui d'une année bissextile à l'adresse
+  memnbjour + 4 * (k + 12) *)
 
 (* Initialisation *)
 lw $zero $a0 memsec (* l'emplacement dans la mémoire à déterminer *)
@@ -77,14 +78,39 @@ lw $zero $a2 memzero
 beq $t0 $s0 2 
 j 37
 lw $zero $t0 memzero
-lw $t8 $t1 $t1
-lw $t8 $t8 $t8
+add $t8 $t1 $t1 
+add $t8 $t8 $t8
 beq $s2 $zero 2
 j 46 (* le cas où annee mod 4 != 0 *)
 beq $s3 $zero 2
-j ?? (* le cas où annee mod 4 == 0 mais annee mod 100 != 0 *)
+j 49 (* le cas où annee mod 4 == 0 mais annee mod 100 != 0 *)
 beq $s4 $zero 2
 j 46 (* le cas où annee mod 100 == 0 mais annee mod 400 != 0 *)
-j ?? (* le cas où annee mod 400 == 0 *)
-
-(* à continuer ici *)
+j 49 (* le cas où annee mod 400 == 0 *)
+addi $t8 $t8 160 (* le cas d'une année non bissextile *)
+lw $t8 $s7 memzero
+j 51
+addi $t8 $t8 208 (* le cas d'une année bissextile *)
+lw $t8 $s7 memzero
+beq $a3 $s7 2 (* jour *)
+j 18
+addi $t1 $t1 1
+lw $zero $a3 memzero
+beq $t1 $s1 2
+j 18
+lw $zero $t1 memzero
+addi $t2 $t2 1
+addi $s2 $s2 1
+addi $s3 $s3 1
+addi $s4 $s4 1
+beq $s2 $t3 2
+j 18
+lw $zero $s2 memzero
+beq $s3 $t4 2
+j 18
+lw $zero $s3 memzero
+addi $s5 $s5 1
+beq $s4 $t5 2
+j 18
+lw $zero $s4 memzero
+j18
