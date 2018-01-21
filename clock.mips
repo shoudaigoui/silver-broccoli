@@ -113,4 +113,4 @@ addi $s5 $s5 1
 beq $s4 $t5 2
 j 18
 lw $zero $s4 memzero
-j18
+j 18
