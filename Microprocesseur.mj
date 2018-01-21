@@ -15,6 +15,14 @@ Extension_de_signe<n>(input:[32-n]) = (output:[32]) where
 	end if
 end where
 
+ShiftLeft<n>(input:[32]) = output:[32] where
+	if n = 0 then 
+		output = input
+	else
+		output = ShiftLeft<n-1>(input[1..31] . 0)
+	end if
+end where
+
 (* Attention à la convention choisie pour le mux *)
 Nmux<n>(a, b:[n], c:[n]) = (d:[n]) where
 	if n = 1 then
@@ -74,9 +82,9 @@ Opp<n>(a:[n]) = (o:[n]) where
   if n = 0 then
     o = []
   else
-    o1 = Not(a);
+    o1 = Not<n>(a) ;
     o2 = Repeat<n-1>(0) . 1;
-    (o, l) = adder(o1, o2, 0)
+    (o, l) = adder<n>(o1, o2, 0)
   end if
 end where
 
@@ -94,55 +102,107 @@ Eq<n>(a:[n], b:[n]) = (o) where
   end if
 end where
 
-Alu(a: [32], b:[32], op:[3]) = (o:[32], r, c) where
-  (o_add, c_add) = adder(a, b, 0);
-  opp_b = Opp(b);
-  (o_sub, c_sub) = adder(a, opp_b, 0);
-  o_or = Or(a,b);
-  o_and = And(a,b);
-  fl_eq = Eq(a,b);
-  fl_ge = not a[0];
-
+ALU(a: [32], b:[32], op:[2]) = (o:[32], r, c) where
+  (o_add, c_add) = adder<32>(a, b, 0);
+  opp_b = Opp<32>(b);
+  (o_sub, c_sub) = adder<32>(a, opp_b, 0);
+  o_or = Or<32>(a, b);
+  o_and = And<32>(a, b);
+  fl_eq = Eq<32>(a, b);
+  fl_neq = not fl_eq;
   o_add_sub = Nmux<32>(op[1], o_sub, o_add);
   o_and_or = Nmux<32>(op[1], o_or, o_and);
-  o = Nmux<32>(op[0], o_and_or, o_add_sub)
-  r = mux(op[1], fl_ge, fl_eq);
+  o = Nmux<32>(op[0], o_and_or, o_add_sub);
+  r = mux(op[1], fl_neq, fl_eq);
   c = mux(op[1], c_sub, c_add);
 end where
 
-Jump_and_link(addr:[26],r31:[32],pc:[32]) = (new_pc:[32],new_r31:[32]) where
-	quatre = Extension_de_signe<28>(0100);
-	(x,o1) = adder<32>(pc, quatre,0);
-	new_pc = x[28..31] . addr . 00;
-	(y,o2) = adder<32>(x, quatre,o1);
-	(new_r31,o3) = adder<32>(pc, Extension_de_signe<28>(1000),0)
+MainControl(opcode:[6]) = 
+  (RegDst, Branch, Jump, MemWrite, MemtoReg, ALUSrc, RegWrite, ALUOp:[2]) where
+  RegDst = not (opcode[0] + opcode[2] + opcode[3] + opcode[4] + opcode[5]);
+  Branch = opcode[3];
+  Jump = opcode[4] & (not opcode[5]);
+  MemWrite = opcode[0] & opcode[2];
+  MemtoReg = opcode[0] & (not opcode[2]);
+  ALUSrc = opcode[2];
+  RegWrite = RegDst + MemtoReg + (ALUSrc & (not MemWrite));
+  b1 = opcode[0] + opcode[1] + opcode[2];
+  b2 = opcode[3] & (not opcode[5]);
+  ALUOp0 = b1 + b2;
+  ALUOp1 = Branch;
+  ALUOp = ALUOp0 . ALUOp1;
+  (* Il manque ALUOp *)
+end where
+  
+ALUControl(ALUOp:[2], funcode:[6]) = (ALUcode:[2]) where
+  check_funcode = not (ALUOp[0] + ALUOp[1]); (* type R *)
+  alu0 = check_funcode & funcode[3];
+  b1 = (not ALUOp[0]) & ALUOp[1]; 
+  b2 = check_funcode & (funcode[4] ^ funcode[5]);
+  alu1 = b1 + b2;
+  ALUcode = alu0 . alu1; 
 end where
 
-(* à vérifier *)
-Controls(opcode:[6]) = 
-  (RegDst, Branch, Jump, MemWrite, MemToReg, AluSrc, RegWrite, JumpAL, ALUop:[2]) where
-  RegDst = not (opcode[0] + opcode[1] + opcode[2] + opcode[3] + opcode[4] +
-  opcode[5]);
-  Branch = opcode[3] + ((opcode[5] & (not opcode[4])))
-  
+(* Les registres sont mis dans la ram *)
+GetRegisters(r1:[5], r2:[5], w:[5], we, data:[32]) = (r1_data:[32], r2_data:[32]) where 
+  zeros_25 = Repeat<25>(0);
+  addr1 = zeros_25.r1.0.0;
+  addr2 = zeros_25.r2.0.0;
+  write_addr = zeros_25.w.0.0;
+  r1_data = ram<32, 32>(addr1, we, write_addr, data);
+  r2_data = ram<32, 32>(addr2, 0, write_addr, data);
+end where
+
 Cut(ins:[32]) = 
-  (opcode:[6], reg1:[5], reg2:[5], reg3:[5], funcode:[6], imm:[16], jump_addr:[26]) where
+  (opcode:[6], r1:[5], r2:[5], r3:[5], funcode:[6], imm:[16], jump_addr:[26]) where
   opcode = ins[..5];
-  reg1 = ins[6..10];
-  reg2 = ins[11..15];
-  reg3 = ins[16..20];
+  r1 = ins[6..10];
+  r2 = ins[11..15];
+  r3 = ins[16..20];
   imm = ins[16..];
   funcode = ins[26..];
   jump_addr = ins[6..];
-
-(* à continuer ici *)
+end where
 
 main() = () where
 
-  (* new_pc *)
-  zero = Repeat<32>(0);
-  pc_addr = Repeat<25>(0).1.1.0.0.1.0.0;
-  pc = ram<32,32>(pc_addr, 0, zero, zero);
-  quatre = Repeat<29>.1.0.0;
-  (pc_suivant, k1) = adder<32>(pc, quatre, 0);
+  (* pc *)
+  all_zero = Repeat<32>(0);
+  pc_addr = Repeat<25>(0).1.1.1.0.0.0.0; (* registre %gp *)
+  present_pc = ram<32,32>(pc_addr, 0, all_zero, all_zero);
+  quatre = Repeat<29>(0).1.0.0;
+  (next_pc, c1) = adder<32>(present_pc, quatre, 0);
+ 
+  (* contrôle principal *)
+  ins = rom<32,32>(present_pc);
+  (opcode, r1, r2, r3, funcode, imm, jump_addr) = Cut(ins);
+  (RegDst, Branch, Jump, MemWrite, MemtoReg, ALUSrc, RegWrite, ALUOp) =
+    MainControl(opcode);
 
+  (* l'ALU *)
+  R0 = Repeat<5>(0);
+  (r1_data, r2_data) = GetRegisters(r1, r2, R0, 0, all_zero);
+  imm_value = Extension_de_signe<16>(imm);
+  ALU_input2 = Nmux<32>(ALUSrc, imm_value, r2_data);
+  ALUcode = ALUControl(ALUOp, funcode);
+  (ALU_res, fl, carry) = ALU(r1_data, ALU_input2, ALUcode);
+
+  (* écriture dan la mémoire/les registres *)
+  mem_read_data = ram<32,32>(ALU_res, MemWrite, ALU_res, r2_data);
+  reg_write_data = Nmux<32>(MemtoReg, mem_read_data, ALU_res);
+  reg_write = Nmux<5>(RegDst, r3, r2);
+  (c2, c3) = GetRegisters(R0, R0, reg_write, RegWrite, reg_write_data);
+
+  (* branch *)
+  (branch_pc, c4) = adder<32>(ShiftLeft<2>(imm_value), present_pc, 0);
+  go_branch = Branch & fl;
+  new_pc1 = Nmux<32>(go_branch, branch_pc, next_pc);
+
+  (* jump *)
+  jump_pc = next_pc[..3].jump_addr.0.0;
+  new_pc = Nmux<32>(Jump, jump_pc, new_pc1);
+
+  (* mise à jour de pc *)
+  c5 = ram<32, 32>(all_zero, 1, pc_addr, new_pc);
+
+end where
